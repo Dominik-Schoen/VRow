@@ -1,4 +1,4 @@
-use std::{collections::HashMap, convert::Infallible, sync::Arc};
+use std::{collections::HashMap, convert::Infallible, sync::Arc, io::stdin, process};
 use tokio::sync::{mpsc, Mutex};
 use warp::{Filter, Rejection, ws::Message};
 
@@ -28,8 +28,27 @@ async fn main() {
 
     println!("done");
     println!("Starting websocket server");
-    warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
-    println!("Websocket server stopped!");
+    tokio::spawn(async move{
+        warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
+    });
+
+    println!("Ready. Type 'q' to exit.");
+    loop {
+        let mut user_input = String::new();
+        match stdin().read_line(&mut user_input) {
+            Ok(input) => input,
+            Err(e) => {
+                println!("Error: {}", e);
+                continue;
+            }
+        };
+        let user_input = user_input.trim_end_matches(&['\r', '\n'][..]);
+        
+        match user_input.as_ref() {
+            "q" => process::exit(0),
+            &_ => println!("Unkown command: {}", user_input),
+        }
+    }
 }
 
 fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
