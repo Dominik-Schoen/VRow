@@ -3,6 +3,7 @@ use tokio::sync::{mpsc, Mutex};
 use warp::{Filter, Rejection, ws::Message};
 
 mod websocket_server;
+mod rower_connector;
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -27,10 +28,14 @@ async fn main() {
      .with(warp::cors().allow_any_origin());
 
     println!("done");
-    println!("Starting websocket server");
+    print!("Starting websocket server... ");
     tokio::spawn(async move{
         warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
     });
+
+    println!("done");
+    print!("Setting up Bluetooth. I need your help here!");
+    rower_connector::connector::get_ble_adapters();
 
     println!("Ready. Type 'q' to exit.");
     loop {
