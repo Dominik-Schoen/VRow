@@ -1,12 +1,10 @@
-use std::{collections::HashMap, convert::Infallible, sync::Arc, io::stdin, process, str::FromStr, any::type_name};
-use core::result::Result as CoreResult;
+use std::{collections::HashMap, convert::Infallible, sync::Arc, io::stdin, process};
 use tokio::sync::{mpsc, Mutex};
-use tokio_stream::StreamExt;
-use tokio_util::codec::{FramedRead, LinesCodec};
 use warp::{Filter, Rejection, ws::Message};
 
 mod websocket_server;
 mod rower_connector;
+mod utils;
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -38,10 +36,13 @@ async fn main() {
 
     println!("done");
     print!("Setting up Bluetooth. I need your help here!");
-    rower_connector::connector::get_ble_adapters();
+    //rower_connector::connector::get_ble_adapters();
 
     println!("Ready. Type 'q' to exit.");
-    loop {
+    let input: String = utils::typed_read_line_blocking().await.unwrap();
+    println!("{}", input);
+
+    /*loop {
         let mut user_input = String::new();
         match stdin().read_line(&mut user_input) {
             Ok(input) => input,
@@ -56,29 +57,8 @@ async fn main() {
             "q" => process::exit(0),
             &_ => println!("Unkown command: {}", user_input),
         }
-    }
+    }*/
 }
-
-
-async fn typed_read_line_blocking<T: FromStr>() -> CoreResult<T, Box<dyn std::error::Error>> {
-    println!("Expecting input of type {}:", type_name::<T>());
-    let stdin = tokio::io::stdin();
-    let mut reader = FramedRead::new(stdin, LinesCodec::new());
-
-    loop {
-        let line = reader.next().await.unwrap().expect("Something went wrong reading the buffer");
-        let parsed_input = line.parse::<T>();
-
-        match parsed_input {
-            Ok(input) => return Ok(input),
-            Err(_) => {
-                println!("Expected type {1}. Couldn't parse '{0}' to {1}! Try different input.", line, type_name::<T>());
-                continue;
-            },
-        }
-    }
-}
-
 
 fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
     warp::any().map(move || clients.clone())
