@@ -1,5 +1,8 @@
-use std::{collections::HashMap, convert::Infallible, sync::Arc, io::stdin, process};
+use std::{collections::HashMap, convert::Infallible, sync::Arc, io::stdin, process, str::FromStr, any::type_name};
+use core::result::Result as CoreResult;
 use tokio::sync::{mpsc, Mutex};
+use tokio_stream::StreamExt;
+use tokio_util::codec::{FramedRead, LinesCodec};
 use warp::{Filter, Rejection, ws::Message};
 
 mod websocket_server;
@@ -55,6 +58,27 @@ async fn main() {
         }
     }
 }
+
+
+async fn typed_read_line_blocking<T: FromStr>() -> CoreResult<T, Box<dyn std::error::Error>> {
+    println!("Expecting input of type {}:", type_name::<T>());
+    let stdin = tokio::io::stdin();
+    let mut reader = FramedRead::new(stdin, LinesCodec::new());
+
+    loop {
+        let line = reader.next().await.unwrap().expect("Something went wrong reading the buffer");
+        let parsed_input = line.parse::<T>();
+
+        match parsed_input {
+            Ok(input) => return Ok(input),
+            Err(_) => {
+                println!("Expected type {1}. Couldn't parse '{0}' to {1}! Try different input.", line, type_name::<T>());
+                continue;
+            },
+        }
+    }
+}
+
 
 fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
     warp::any().map(move || clients.clone())
