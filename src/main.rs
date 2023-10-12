@@ -5,6 +5,7 @@ use warp::{Filter, Rejection, ws::Message};
 
 mod websocket_server;
 mod rower_connector;
+mod utils;
 
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -51,7 +52,10 @@ async fn main() {
 
     // loop
     println!("Ready. Type 'q' to exit.");
-    loop {
+    let input: String = utils::typed_read_line_blocking().await.unwrap();
+    println!("{}", input);
+
+    /*loop {
         let mut user_input = String::new();
         match stdin().read_line(&mut user_input) {
             Ok(input) => input,
@@ -66,7 +70,7 @@ async fn main() {
             "q" => process::exit(0),
             &_ => println!("Unkown command: {}", user_input),
         }
-    }
+    }*/
 }
 
 fn select_bluetooth_adapter(adapter_list: Vec<(String, Adapter)>) -> Adapter {
