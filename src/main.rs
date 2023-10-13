@@ -96,7 +96,6 @@ fn setup_websocket_server() {
      .and(warp::ws())
      .and(with_clients(clients.clone()))
      .and_then(websocket_server::handlers::ws_handler);
-
     let routes = ws_route
      .with(warp::cors().allow_any_origin());
     println!("done");

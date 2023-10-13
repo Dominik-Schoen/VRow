@@ -18,6 +18,7 @@ pub async fn typed_read_line_blocking<T: FromStr>() -> Result<T, Box<dyn std::er
 
     loop {
         let line = reader.next().await.unwrap().expect("Something went wrong reading the buffer");
+        //let line = line.trim_end_matches(&['\r', '\n'][..]);
         let parsed_input = line.parse::<T>();
 
         match parsed_input {
