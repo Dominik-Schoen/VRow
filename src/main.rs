@@ -26,7 +26,6 @@ async fn main() {
      .and(warp::ws())
      .and(with_clients(clients.clone()))
      .and_then(websocket_server::handlers::ws_handler);
-
     let routes = ws_route
      .with(warp::cors().allow_any_origin());
     println!("done");
@@ -37,18 +36,21 @@ async fn main() {
     });
     println!("done");
     
+
     // Bluetooth
     println!("Setting up bluetooth... ");
     let adapter_list = rower_connector::connector::get_ble_adapter_list().await.expect("Error getting Adapter");
+
     println!("Select the index of the bluetooth adapter to use:");
     for (pos, adapter) in adapter_list.iter().enumerate() {
         println!(" {} - {}", pos, adapter.0);
     }
 
-    let adapter: Adapter = select_bluetooth_adapter(adapter_list);
+    let adapter: Adapter = select_bluetooth_adapter(adapter_list).await;
     
     println!("Starting scanning... ");
     let peripheral_list = rower_connector::connector::scan_for_devices(adapter).await.expect("Error getting peripherals");
+
 
     // loop
     println!("Ready. Type 'q' to exit.");
@@ -73,20 +75,11 @@ async fn main() {
     }*/
 }
 
-fn select_bluetooth_adapter(adapter_list: Vec<(String, Adapter)>) -> Adapter {
+async fn select_bluetooth_adapter(adapter_list: Vec<(String, Adapter)>) -> Adapter {
     loop {
-        
-        let mut user_input = String::new();
-        match stdin().read_line(&mut user_input) {
-            Ok(input) => input,
-            Err(e) => {
-                println!("Error: {}", e);
-                continue;
-            }
-        };
-        let user_input = user_input.trim_end_matches(&['\r', '\n'][..]);
+        let user_input : String = utils::typed_read_line_blocking().await.unwrap();
 
-        let adapter_option = adapter_list.iter().find(|(index, _)| index == user_input);
+        let adapter_option = adapter_list.iter().find(|(index, _)| index.to_string() == user_input);
         match adapter_option {
             Some((_0, _1)) => return _1.clone(),
             None => {
