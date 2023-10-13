@@ -41,7 +41,7 @@ async fn main() {
     for try_count in 0..4 {
         println!("Connecting to peripheral. Try {}", try_count);
         match connect_to_peripheral(peripheral.clone()).await {
-            Ok(_) => todo!(),
+            Ok(_) => break,
             Err(e) => {
                 eprintln!("Error: {}", e);
                 continue;
