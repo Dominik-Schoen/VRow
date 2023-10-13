@@ -1,9 +1,34 @@
-use crate::{Client, Clients};
+use std::{collections::HashMap, sync::Arc, convert::Infallible};
+
+use crate::{Client, Clients, websocket_server::handlers};
 use futures::{FutureExt, StreamExt};
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use uuid::Uuid;
-use warp::ws::{Message, WebSocket};
+use warp::{ws::{Message, WebSocket}, Filter};
+
+pub fn setup_websocket_server() {
+    let clients: Clients = Arc::new(Mutex::new(HashMap::new()));
+
+    print!("Configuring routes... ");
+    let ws_route = warp::path("ws")
+     .and(warp::ws())
+     .and(with_clients(clients.clone()))
+     .and_then(handlers::ws_handler);
+    let routes = ws_route
+     .with(warp::cors().allow_any_origin());
+    println!("done");
+
+    print!("Starting websocket server... ");
+    tokio::spawn(async move{
+        warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
+    });
+    println!("done");
+}
+
+fn with_clients(clients: Clients) -> impl Filter<Extract = (Clients,), Error = Infallible> + Clone {
+    warp::any().map(move || clients.clone())
+}
 
 pub async fn client_connection(ws: WebSocket, clients: Clients) {
     println!("establishing client connection to {:?}", ws);

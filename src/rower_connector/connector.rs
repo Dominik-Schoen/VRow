@@ -19,6 +19,12 @@ impl std::fmt::Display for BluetoothConnectorError {
     }
 }
 
+/// Returns a list of all available adapters combined with their description
+/// 
+/// # Example
+/// ```
+/// let adapter_list = get_ble_adapter_list().await.expect("Error getting Adapter");
+/// ```
 pub async fn get_ble_adapter_list() -> Result<Vec<(String, Adapter)>, Box<dyn Error>> {
     let manager = Manager::new().await?;
     let adapter_list = manager.adapters().await?;
@@ -35,16 +41,22 @@ pub async fn get_ble_adapter_list() -> Result<Vec<(String, Adapter)>, Box<dyn Er
     Ok(adapter_str_list)
 }
 
+/// Creates a tuple of the adapter's decription and adapter
 async fn get_formated_adapter_info(adapter: Adapter) -> (String, Adapter) {
     return (format!("{:?}", (adapter.adapter_info().await)), adapter);
 }
 
-
-pub async fn scan_for_devices(adapter: Adapter) -> Result<Vec<(String, PlatformPeripheral)>, Box<dyn Error>> {
+/// Returns a list of all available PM5s combined with their name, if available.
+/// 
+/// # Example
+/// ```
+/// let peripheral_list = rower_connector::connector::scan_for_devices(adapter).await.expect("Error getting peripherals");
+/// ```
+pub async fn scan_for_performance_monitors(adapter: Adapter) -> Result<Vec<(String, PlatformPeripheral)>, Box<dyn Error>> {
     adapter.start_scan(ScanFilter::default()).await.expect("Can't scan");
     time::sleep(Duration::from_secs(10)).await; // TODO: make event driven
     let peripherals = adapter.peripherals().await?;
-
+    // TODO: filter for PMs
     if peripherals.is_empty() {
         return Err(Box::new(BluetoothConnectorError {
             message: "BLE peripheral devices were not found, sorry.".to_string(),
@@ -54,11 +66,12 @@ pub async fn scan_for_devices(adapter: Adapter) -> Result<Vec<(String, PlatformP
     let info_futures = peripherals.into_iter()
         .map(|peripheral| get_peripheral_info(peripheral));
 
-    let peripheral_list = join_all(info_futures).await;
-    Ok(peripheral_list)
+    let peripheral_list: Vec<(String, PlatformPeripheral)> = join_all(info_futures).await;
+    Ok(peripheral_list.into_iter().filter(|(name, _)| name.starts_with("PM")).collect())
 }
 
-pub async fn connect_to_peripheral(peripheral: PlatformPeripheral) -> Result<(), Box<dyn Error>> {
+/// Connects to the provided PM5.
+pub async fn connect_to_performance_monitor(peripheral: PlatformPeripheral) -> Result<(), Box<dyn Error>> {
     return match peripheral.connect().await {
         Ok(_) => Ok(()),
         Err(_) => Err(Box::new(BluetoothConnectorError {
@@ -67,6 +80,7 @@ pub async fn connect_to_peripheral(peripheral: PlatformPeripheral) -> Result<(),
     };
 }
 
+/// Creates a tuple of the peripheral's name and the peripheral
 async fn get_peripheral_info(peripheral: PlatformPeripheral) -> (String, PlatformPeripheral) {
     return (format!("{:?}", peripheral.properties().await.unwrap().unwrap().local_name), peripheral);
 }
