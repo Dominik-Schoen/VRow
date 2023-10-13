@@ -58,8 +58,13 @@ pub async fn scan_for_devices(adapter: Adapter) -> Result<Vec<(String, PlatformP
     Ok(peripheral_list)
 }
 
-pub async fn connect_to_peripheral(peripheral: PlatformPeripheral) {
-    peripheral.connect().await;
+pub async fn connect_to_peripheral(peripheral: PlatformPeripheral) -> Result<(), Box<dyn Error>> {
+    return match peripheral.connect().await {
+        Ok(_) => Ok(()),
+        Err(_) => Err(Box::new(BluetoothConnectorError {
+            message: "Couldn't connect to peripheral".to_string(),
+        })),
+    };
 }
 
 async fn get_peripheral_info(peripheral: PlatformPeripheral) -> (String, PlatformPeripheral) {

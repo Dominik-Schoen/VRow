@@ -1,4 +1,4 @@
-use std::{collections::HashMap, convert::Infallible, sync::Arc};
+use std::{collections::HashMap, convert::Infallible, sync::Arc, process};
 use btleplug::{platform::Adapter, platform::Peripheral};
 use tokio::sync::{mpsc, Mutex};
 use warp::{Filter, Rejection, ws::Message};
@@ -40,31 +40,24 @@ async fn main() {
     let peripheral: Peripheral = select_peripheral(peripheral_list).await;
     for try_count in 0..4 {
         println!("Connecting to peripheral. Try {}", try_count);
-        connect_to_peripheral(peripheral.clone()).await;
-        // code to be executed 5 times
+        match connect_to_peripheral(peripheral.clone()).await {
+            Ok(_) => todo!(),
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                continue;
+            },
+        };
     }
 
     // loop
     println!("Ready. Type 'q' to exit.");
-    let input: String = utils::typed_read_line_blocking().await.unwrap();
-    println!("{}", input);
-
-    /*loop {
-        let mut user_input = String::new();
-        match stdin().read_line(&mut user_input) {
-            Ok(input) => input,
-            Err(e) => {
-                println!("Error: {}", e);
-                continue;
-            }
-        };
-        let user_input = user_input.trim_end_matches(&['\r', '\n'][..]);
-        
-        match user_input.as_ref() {
+    loop {
+        let input: String = utils::typed_read_line_blocking().await.unwrap();
+        match input.as_ref() {
             "q" => process::exit(0),
-            &_ => println!("Unkown command: {}", user_input),
+            &_ => println!("Unkown command: {}", input),
         }
-    }*/
+    }
 }
 
 async fn select_bluetooth_adapter(adapter_list: Vec<(String, Adapter)>) -> Adapter {
@@ -94,7 +87,6 @@ async fn select_peripheral(peripheral_list: Vec<(String, Peripheral)>) -> Periph
         };
     }
 }
-
 
 fn setup_websocket_server() {
     let clients: Clients = Arc::new(Mutex::new(HashMap::new()));
