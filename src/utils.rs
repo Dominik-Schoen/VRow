@@ -1,4 +1,4 @@
-use std::{str::FromStr, any::type_name};
+use std::{str::FromStr, any::type_name, fs::OpenOptions, io::Write};
 use tokio_stream::StreamExt;
 use tokio_util::codec::{FramedRead, LinesCodec};
 
@@ -12,7 +12,7 @@ use tokio_util::codec::{FramedRead, LinesCodec};
 /// let s: String = blocking_typed_read_line().await?;
 /// ```
 pub async fn typed_read_line_blocking<T: FromStr>() -> Result<T, Box<dyn std::error::Error>> {
-    println!("Expecting input of type {}:", type_name::<T>());
+    //println!("Expecting input of type {}:", type_name::<T>());
     let stdin = tokio::io::stdin();
     let mut reader = FramedRead::new(stdin, LinesCodec::new());
 
@@ -29,4 +29,23 @@ pub async fn typed_read_line_blocking<T: FromStr>() -> Result<T, Box<dyn std::er
             },
         }
     }
+}
+
+/// Overwrites to content of the provided file. Only uses files at 
+/// the current directory.
+/// 
+///  # Example
+/// ```
+/// utils::overwrite_file("log.txt", input.clone()).expect("couldn't write");
+/// ````
+pub fn overwrite_file(filename: &str, text: String) -> std::io::Result<()> {
+    let working_dir = std::env::current_dir().unwrap();
+    let path = working_dir.join(filename);
+    let mut file = OpenOptions::new().write(true).create(true).truncate(true).open(path.clone())?;
+    match file.write_all(text.as_bytes()){
+        Ok(_) => println!("writing complete {}", path.into_os_string().into_string().unwrap()),
+        Err(_) => println!("couldn't write to file"),
+    }
+    file.flush()?;
+    Ok(())
 }

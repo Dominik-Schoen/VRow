@@ -42,7 +42,7 @@ async fn get_formated_adapter_info(adapter: Adapter) -> (String, Adapter) {
 
 pub async fn scan_for_devices(adapter: Adapter) -> Result<Vec<(String, PlatformPeripheral)>, Box<dyn Error>> {
     adapter.start_scan(ScanFilter::default()).await.expect("Can't scan");
-    time::sleep(Duration::from_secs(10)).await;
+    time::sleep(Duration::from_secs(10)).await; // TODO: make event driven
     let peripherals = adapter.peripherals().await?;
 
     if peripherals.is_empty() {
@@ -58,6 +58,15 @@ pub async fn scan_for_devices(adapter: Adapter) -> Result<Vec<(String, PlatformP
     Ok(peripheral_list)
 }
 
+pub async fn connect_to_peripheral(peripheral: PlatformPeripheral) -> Result<(), Box<dyn Error>> {
+    return match peripheral.connect().await {
+        Ok(_) => Ok(()),
+        Err(_) => Err(Box::new(BluetoothConnectorError {
+            message: "Couldn't connect to peripheral".to_string(),
+        })),
+    };
+}
+
 async fn get_peripheral_info(peripheral: PlatformPeripheral) -> (String, PlatformPeripheral) {
-    return (format!("{:?}", peripheral.properties().await.unwrap()), peripheral);
+    return (format!("{:?}", peripheral.properties().await.unwrap().unwrap().local_name), peripheral);
 }
