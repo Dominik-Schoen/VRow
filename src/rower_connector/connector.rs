@@ -1,10 +1,18 @@
+use std::collections::BTreeSet;
 use std::error::Error;
 use std::time::Duration;
 use futures::future::join_all;
 use tokio::time;
+use tokio_stream::StreamExt;
+use uuid::Uuid;
 
-use btleplug::api::{Central, Manager as _, ScanFilter, Peripheral};
+use btleplug::api::{Central, Manager as _, ScanFilter, Peripheral, Characteristic, CharPropFlags, Descriptor};
 use btleplug::platform::{Manager, Adapter, Peripheral as PlatformPeripheral};
+
+const UUID: Uuid = Uuid::from_u128(0x43E5); // TODO: check for the real number
+const SERVICE_UUID: Uuid = Uuid::from_u128(0xCE060030_43E5_11E4_916C_0800200C9A66);
+const ROWING_STATUS_1_UUID: Uuid = Uuid::from_u128(0xCE060031_43E5_11E4_916C_0800200C9A66);
+const ROWING_STATUS_2_UUID: Uuid = Uuid::from_u128(0xCE060032_43E5_11E4_916C_0800200C9A66);
 
 #[derive(Debug)]
 struct BluetoothConnectorError {
@@ -70,17 +78,51 @@ pub async fn scan_for_performance_monitors(adapter: Adapter) -> Result<Vec<(Stri
     Ok(peripheral_list.into_iter().filter(|(name, _)| name.starts_with("PM")).collect())
 }
 
-/// Connects to the provided PM5.
-pub async fn connect_to_performance_monitor(peripheral: PlatformPeripheral) -> Result<(), Box<dyn Error>> {
-    return match peripheral.connect().await {
-        Ok(_) => Ok(()),
-        Err(_) => Err(Box::new(BluetoothConnectorError {
-            message: "Couldn't connect to peripheral".to_string(),
-        })),
-    };
-}
-
 /// Creates a tuple of the peripheral's name and the peripheral
 async fn get_peripheral_info(peripheral: PlatformPeripheral) -> (String, PlatformPeripheral) {
     return (format!("{:?}", peripheral.properties().await.unwrap().unwrap().local_name), peripheral);
+}
+
+/// Connects to the provided PM5.
+pub async fn connect_to_performance_monitor(peripheral: PlatformPeripheral) -> Result<(), Box<dyn Error>> {
+    peripheral.connect().await?;
+    
+    discover_PM_services(peripheral.clone()).await;
+    
+    // TODO: change based on scan
+    let characteristic : Characteristic = Characteristic { 
+        uuid: UUID, // TODO: change 
+        service_uuid: SERVICE_UUID, 
+        properties: CharPropFlags::READ, 
+        descriptors: BTreeSet::from([
+            Descriptor {
+                uuid:  Uuid::from_u128(0x0031),
+                service_uuid: SERVICE_UUID,
+                characteristic_uuid: ROWING_STATUS_1_UUID,
+            },
+            Descriptor {
+                uuid:  Uuid::from_u128(0x0032),
+                service_uuid: SERVICE_UUID,
+                characteristic_uuid: ROWING_STATUS_2_UUID,
+            },
+        ]) 
+    };
+
+    peripheral.subscribe(&characteristic).await?;
+    let mut notification_stream = peripheral.notifications().await?;
+    while let Some(data) = notification_stream.next().await {
+        println!(
+            "Received data from [{:?}]: {:?}",
+            data.uuid, data.value
+        );
+    }    
+    
+    Ok(())
+}
+
+async fn discover_PM_services(peripheral: PlatformPeripheral) {
+    peripheral.discover_services().await.expect("Error discovering");
+    for characteristic in peripheral.characteristics() {
+        println!("char {}", characteristic)
+    }
 }
