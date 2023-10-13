@@ -12,7 +12,7 @@ use tokio_util::codec::{FramedRead, LinesCodec};
 /// let s: String = blocking_typed_read_line().await?;
 /// ```
 pub async fn typed_read_line_blocking<T: FromStr>() -> Result<T, Box<dyn std::error::Error>> {
-    println!("Expecting input of type {}:", type_name::<T>());
+    //println!("Expecting input of type {}:", type_name::<T>());
     let stdin = tokio::io::stdin();
     let mut reader = FramedRead::new(stdin, LinesCodec::new());
 
