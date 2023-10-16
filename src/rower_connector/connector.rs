@@ -64,7 +64,7 @@ pub async fn scan_for_performance_monitors(adapter: Adapter) -> Result<Vec<(Stri
     adapter.start_scan(ScanFilter::default()).await.expect("Can't scan");
     time::sleep(Duration::from_secs(10)).await; // TODO: make event driven
     let peripherals = adapter.peripherals().await?;
-    // TODO: filter for PMs
+
     if peripherals.is_empty() {
         return Err(Box::new(BluetoothConnectorError {
             message: "BLE peripheral devices were not found, sorry.".to_string(),

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, convert::Infallible};
 
 use crate::{Client, Clients, websocket_server::handlers};
-use futures::{FutureExt, StreamExt};
+use futures::{FutureExt, StreamExt, lock};
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use uuid::Uuid;
@@ -81,7 +81,14 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) {
         Err(_) => return,
     };
 
-    if message == "ping" || message == "ping\n" {
+    let locked = clients.lock().await;
+    for (s, client) in locked.iter() {
+        let a = client.sender.as_ref().unwrap();
+        let _ = a.send(Ok(Message::text(format!("from {}: {}", s, message))));
+    }
+    return;
+
+    /*if message == "ping" || message == "ping\n" {
         let locked = clients.lock().await;
         match locked.get(client_id) {
             Some(v) => {
@@ -93,5 +100,5 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) {
             None => return,
         }
         return;
-    };
+    };*/
 }
