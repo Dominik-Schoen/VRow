@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc, convert::Infallible};
 
 use crate::{Client, Clients, websocket_server::handlers};
-use futures::{FutureExt, StreamExt, lock};
+use futures::{FutureExt, StreamExt};
 use tokio::sync::{mpsc, Mutex};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use uuid::Uuid;
