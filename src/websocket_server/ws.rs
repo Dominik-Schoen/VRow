@@ -84,7 +84,7 @@ async fn client_msg(client_id: &str, msg: Message, clients: &Clients) {
     let locked = clients.lock().await;
     for (s, client) in locked.iter() {
         let a = client.sender.as_ref().unwrap();
-        let _ = a.send(Ok(Message::text(format!("from {}: {}", s, message))));
+        let _ = a.send(Ok(Message::text(format!("{}", message))));
     }
     return;
 

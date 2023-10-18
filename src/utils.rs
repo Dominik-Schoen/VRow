@@ -36,7 +36,7 @@ pub async fn typed_read_line_blocking<T: FromStr>() -> Result<T, Box<dyn std::er
 /// 
 ///  # Example
 /// ```
-/// utils::overwrite_file("log.txt", input.clone()).expect("couldn't write");
+/// utils::overwrite_file("log.txt", "text to file").expect("couldn't write");
 /// ````
 pub fn overwrite_file(filename: &str, text: String) -> std::io::Result<()> {
     let working_dir = std::env::current_dir().unwrap();
