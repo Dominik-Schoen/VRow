@@ -189,7 +189,7 @@ pub async fn connect_to_performance_monitor(peripheral: PlatformPeripheral) -> R
     Ok(())
 }
 
-async fn discover_pm_services(peripheral: PlatformPeripheral) {
+/*async fn discover_pm_services(peripheral: PlatformPeripheral) {
     peripheral.discover_services().await.expect("Error discovering");
     for characteristic in peripheral.characteristics() {
         println!("uuid {}", characteristic.uuid);
@@ -202,7 +202,7 @@ async fn discover_pm_services(peripheral: PlatformPeripheral) {
         println!("-------------");
     }
     return;
-}
+}*/
 
 fn write_rowing_info_to_file(cals: &u32, stroke_rate: &u32, stroke_cals: &u32) {
     utils::overwrite_file("rowerstatus.txt", format!("{} cal, {} strokes/m, {} cal/h", cals, stroke_rate, stroke_cals)).expect("couldn't write");
@@ -226,11 +226,11 @@ fn get_cals(data: &[u8]) -> u32 {
     return cals_high * 256 + cals_low
 }
 
-fn get_split_cals(data: &[u8]) -> u32 {
+/*fn get_split_cals(data: &[u8]) -> u32 {
     let cals_high: u32 = data[13] as u32;
     let cals_low: u32 = data[12] as u32;
     return cals_high * 256 + cals_low
-}
+}*/
 
 fn get_stroke_cals(data: &[u8]) -> u32 {
     let stroke_cals_high: u32 = data[7] as u32;
