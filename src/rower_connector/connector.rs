@@ -98,19 +98,6 @@ pub async fn connect_to_performance_monitor(peripheral: PlatformPeripheral) -> R
     // To enable scan of services, uncomment these lines
     //discover_pm_services(peripheral.clone()).await;
     //return Ok(());
-    
-    /*let characteristic_status_1 : Characteristic = Characteristic { 
-        uuid: ROWING_STATUS_1_UUID,
-        service_uuid: SERVICE_UUID, 
-        properties: CharPropFlags::READ, 
-        descriptors: BTreeSet::from([
-            Descriptor {
-                uuid:  DESCR_UUID,
-                service_uuid: SERVICE_UUID,
-                characteristic_uuid: ROWING_STATUS_1_UUID,
-            }
-        ]) 
-    };*/
 
     let characteristic_status_2 : Characteristic = Characteristic { 
         uuid: ROWING_STATUS_2_UUID,
