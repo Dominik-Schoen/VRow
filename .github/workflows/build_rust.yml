@@ -22,5 +22,9 @@ jobs:
     - name: Install lidbus
       run: sudo apt install libdbus-1-dev pkg-config
     - name: Build
-      run: cargo build --verbose
-
+      run: cargo build --verbose --release
+    - name: Upload to artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-artifact
+        path: target/release/
