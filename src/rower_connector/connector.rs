@@ -153,17 +153,17 @@ pub async fn connect_to_performance_monitor(peripheral: PlatformPeripheral, udp_
             ROWING_STATUS_2_UUID=>{
                 let mut s = stroke_rate.lock().unwrap();
                 *s = get_stroke_rate_from_bytes(&data.value);
-                //println!("Stroke Rate {}", get_stroke_rate(&data.value));
+                //println!("Stroke Rate {}", get_stroke_rate_from_bytes(&data.value));
             }
             ROWING_STATUS_3_UUID=>{
                 let mut c = cals.lock().unwrap();
                 *c = get_cals_from_bytes(&data.value);
-                //println!("Cals {}", get_cals(&data.value));
+                //println!("Cals {}", get_cals_from_bytes(&data.value));
             }
             ROWING_STATUS_6_UUID=>{
                 let mut sr = stroke_cals.lock().unwrap();
                 *sr = get_stroke_cals_from_bytes(&data.value);
-                //println!("Stroke Cals {}", get_stroke_cals(&data.value));
+                //println!("Stroke Cals {}", get_stroke_cals_from_bytes(&data.value));
             }
             _=> println!("Unkown uuid {}", received_uuid)
         }
@@ -173,7 +173,8 @@ pub async fn connect_to_performance_monitor(peripheral: PlatformPeripheral, udp_
             stroke_rate: stroke_rate.lock().unwrap().clone(),
             stroke_cals: stroke_cals.lock().unwrap().clone(),
         };
-        send_rowing_info_to_server(row_data, &udp_server);
+        // TODO change this to tokio task
+        let _ = send_rowing_info_to_server(&row_data, &udp_server).await;
     }    
     
     Ok(())
@@ -200,9 +201,14 @@ fn write_rowing_info_to_file(cals: &u32, stroke_rate: &u32, stroke_cals: &u32) {
     utils::overwrite_file("/Volumes/shared/rowerstatus.txt", format!("{} cal, {} strokes/m, {} cal/h", cals, stroke_rate, stroke_cals)).expect("couldn't write");
 }
 
-fn send_rowing_info_to_server(row_data: RowData, udp_server: &Server) {
-    let json = serde_json::to_string(&row_data).unwrap();
-    let _ = udp_server.send_string(json);
+async fn send_rowing_info_to_server(row_data: &RowData, udp_server: &Server) {
+    let json = serde_json::to_string(row_data).unwrap();
+    //println!("{}",json);
+    let send_result = udp_server.send_string(json).await;
+    match send_result {
+        Ok(_) => {},
+        Err(e) => println!("Error sending: {}", e),
+    }
 }
 
 #[allow(dead_code)]

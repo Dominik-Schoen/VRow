@@ -28,6 +28,7 @@ async fn main() {
     let adapter: Adapter = if adapter_list.len() > 1 {
          select_bluetooth_adapter(adapter_list).await
     } else {
+        println!("One adapter detected. Using this one!");
         adapter_list.get(0).unwrap().1.clone()
     };
     
@@ -37,6 +38,7 @@ async fn main() {
     let peripheral: Peripheral = if peripheral_list.len() > 1 {
         select_peripheral(peripheral_list).await
     } else {
+        println!("One peripheral detected. Using this one!");
         peripheral_list.get(0).unwrap().1.clone()
     };
 
