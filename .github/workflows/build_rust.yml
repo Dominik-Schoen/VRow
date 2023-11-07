@@ -28,5 +28,5 @@ jobs:
     - name: Upload to artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: build-artifact
-        path: target/release/
+        name: stream_server
+        path: target/release/stream_server
