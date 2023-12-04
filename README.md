@@ -6,7 +6,7 @@ VRow is a software to communicate between Concept 2 Ergometers and other applica
 
 Requirements:
 - Rust and Cargo installed
-- Linux or MacOS
+- Linux or MacOS (Windows is not supported due to BLE limitations)
 
 To create a development build, clone the repo and build the project using `cargo build`.
 
